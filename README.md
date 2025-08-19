@@ -97,11 +97,11 @@ Make sure your camera is connected and accessible.
 This project requires a trained YOLOv4 model. If you want to train your own, use Darknet or any preferred training framework and update the weights/config files accordingly.
 
 🧑‍💻 Author
-Ch Atul Kumar Prusty
-📫 [chatulprusty@gmail.com]
-🔗 [https://github.com/ChAtulKumarPrusty/]
-🔗 [https://www.linkedin.com/in/chatulkumarprusty/]
-🔗 [https://my-portfolio-xi-ochre-74.vercel.app/]
+Suraj Kumar
+📫 [surajkumarpandey.ds@gmail.com]
+🔗 [https://github.com/SurajKumarpandey001]
+🔗 [https://www.linkedin.com/in/suraj-kumar-0136522a6/]
+
 
 
 
