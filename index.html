@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Detection Web App</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Google Font for Futuristic Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- AOS for Scroll Animations -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* Global Styling */
+        body {
+            font-family: 'Roboto Mono', monospace;
+            color: white;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background: linear-gradient(45deg, #020024, #090979, #00d4ff, #004eff);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Background Canvas */
+        #backgroundCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            padding: 30px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            margin: 20px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: glow 2s infinite;
+        }
+
+        .header h1 {
+            font-size: 50px;
+            color: #00FFCC;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 25px rgba(0, 255, 255, 1);
+        }
+
+        /* Glow Animation */
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            }
+        }
+
+        /* Video Container */
+        .video-container {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        #video {
+            width: 80%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Loader Spinner */
+        .spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00FFCC;
+        }
+
+        /* Controls */
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .controls button {
+            background: linear-gradient(90deg, #00FFCC, #004eff);
+            color: #111;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+            transition: 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .controls button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: rgba(0, 255, 255, 0.3);
+            transition: 0.5s;
+            border-radius: 50%;
+        }
+
+        .controls button:hover:before {
+            left: 100%;
+        }
+
+        .controls button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0px 10px 20px rgba(0, 255, 255, 1);
+        }
+
+        .controls input[type="range"] {
+            width: 300px;
+            accent-color: #00FFCC;
+            background-color: transparent;
+            margin-top: 10px;
+        }
+
+        .controls label {
+            color: #00FFCC;
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(25px);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+        }
+
+        .modal-header,
+        .modal-footer {
+            background-color: #00FFCC;
+            color: #1a1a1a;
+            border: none;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #00FFCC;
+            font-size: 14px;
+            text-shadow: 0 0 6px rgba(0, 255, 255, 0.7);
+        }
+
+        /* Scroll Animations */
+        [data-aos] {
+            opacity: 0;
+            transition-property: transform, opacity;
+            transition-duration: 1s;
+            transition-timing-function: ease-in-out;
+        }
+
+        [data-aos][data-aos][data-aos-in] {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #video {
+                width: 100%;
+            }
+
+            .controls input[type="range"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Background Lines Animation -->
+    <canvas id="backgroundCanvas"></canvas>
+
+    <!-- Header Section with Scroll Animation -->
+    <div class="header" data-aos="fade-down">
+        <h1>Food Detection</h1>
+    </div>
+
+    <!-- Video Feed with Loader Spinner -->
+    <div class="video-container" data-aos="zoom-in">
+        <img id="video" src="" alt="Object Detection Feed">
+        <div class="spinner" id="spinner">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Buttons and Confidence Slider -->
+    <div class="controls" data-aos="fade-up">
+        <button id="startBtn" onclick="startDetection()">Start Detection</button>
+        <button id="stopBtn" onclick="stopDetection()">Stop Detection</button>
+        <button id="switchBtn" onclick="switchCamera()">Switch Camera</button>
+        <br>
+        <label for="confidence">Confidence Threshold:</label>
+        <input type="range" id="confidence" min="0.1" max="1.0" step="0.1" value="0.5" onchange="setConfidence()">
+        <p>Current Confidence: <span id="confValue">0.5</span></p>
+
+
+    </div>
+
+    <!-- Bootstrap Modals for About, Contact, and How to Use -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <!-- Content will be loaded dynamically here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AOS Script for Scroll Animations -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.js"></script>
+    <script>AOS.init();</script>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Set Confidence Threshold
+        function setConfidence() {
+            let confidence = document.getElementById('confidence').value;
+            document.getElementById('confValue').innerText = confidence;
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '/set_confidence', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('confidence=' + confidence);
+        }
+
+        // Start Detection
+        function startDetection() {
+            document.getElementById('spinner').style.display = 'block';
+            document.getElementById('video').src = '/video_feed';
+            document.getElementById('video').onload = function () {
+                document.getElementById('spinner').style.display = 'none';
+            };
+        }
+
+        // Stop Detection
+        function stopDetection() {
+            document.getElementById('video').src = '';
+        }
+
+        // Switch Camera
+        function switchCamera() {
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '/switch_camera', true);
+            xhr.send();
+        }
+
+        // Open Modal for Info, Contact, and Feedback
+        function openModal(type) {
+            let modalContent = '';
+            if (type === 'about') {
+                modalContent = `
+                    <h5>About This Project</h5>
+                    <p>In the realm of computer vision, object detection is a crucial task that involves identifying and locating objects within images or video frames. This project, titled "Object Detection," aims to leverage advanced algorithms to accurately detect multiple objects in real time using the YOLO (You Only Look Once) framework, which is renowned for its speed and accuracy.</p>
+                    <p>The primary objective of this project is to develop a robust application that can process live video feeds and recognize various objects in real-time, enabling a wide range of applications in fields such as autonomous vehicles, surveillance systems, and robotics. By employing the YOLO architecture, this project achieves a balance between high detection performance and real-time processing capabilities, making it suitable for practical implementations.</p>
+                    <p>The project incorporates the OpenCV library to handle image processing tasks and to provide an intuitive interface for visualizing the detection results. Through extensive training on a comprehensive dataset, the model learns to recognize different classes of objects, allowing it to generalize well to new and unseen data.</p>
+                    <p>The development process involved not only implementing the detection algorithms but also optimizing them for efficient performance on standard hardware. This report details the methodologies adopted, challenges faced, and the results obtained during the project, along with future enhancements that could further improve the model's accuracy and efficiency.</p>
+                `;
+            } else if (type === 'contact') {
+                modalContent = `
+                    <h5>Contact Information</h5>
+                    <p>Feel free to reach out through the following platforms:</p>
+                    <ul>
+                        <li><a href="https://www.linkedin.com/in/ch-atul-kumar-prusty-59576b333 " target="_blank">LinkedIn</a></li>
+                        <li><a href="https://www.youtube.com/@CodeMakerOfficial" target="_blank">YouTube</a></li>
+                        <li><a href="https://www.instagram.com/code__maker" target="_blank">Instagram</a></li>
+                        <li><a href="https://github.com/ChAtulKumarPrusty" target="_blank">GitHub</a></li>
+                    </ul>
+                `;
+            } else if (type === 'howToUse') {
+                modalContent = `
+                    <h5>How to Use This Web App</h5>
+                    <ol>
+                        <li><strong>Start Detection:</strong> Click the "Start Detection" button to begin processing the video feed.</li>
+                        <li><strong>Stop Detection:</strong> Click the "Stop Detection" button to halt the object detection process.</li>
+                        <li><strong>Switch Camera:</strong> If you have multiple cameras, use the "Switch Camera" button to change the input source.</li>
+                        <li><strong>Adjust Confidence Threshold:</strong> Use the slider to set the desired confidence level for object detection.</li>
+                        <li><strong>View Results:</strong> As detection occurs, results will be displayed in real-time on the video feed.</li>
+                    </ol>
+                `;
+            }
+            document.getElementById('modalContent').innerHTML = modalContent;
+            let infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+            infoModal.show();
+        }
+
+        // Lines Animation Script
+        const canvas = document.getElementById('backgroundCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray = [];
+        const numParticles = 100;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 5 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Bounce off walls
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = '#00FFCC';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            for (let i = 0; i < numParticles; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+
+        function connect() {
+            for (let i = 0; i < particlesArray.length; i++) {
+                for (let j = i; j < particlesArray.length; j++) {
+                    const dx = particlesArray[i].x - particlesArray[j].x;
+                    const dy = particlesArray[i].y - particlesArray[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 100) {
+                        ctx.strokeStyle = '#00FFCC';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+                        ctx.lineTo(particlesArray[j].x, particlesArray[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            connect();
+            requestAnimationFrame(animate);
+        }
+        init();
+        animate();
+    </script>
+</body>
+
+</html>
